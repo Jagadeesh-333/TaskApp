@@ -15,7 +15,7 @@ import java.util.List;
         @Autowired
         private TaskService taskService;
 
-        @GetMapping
+        @GetMapping("/getAllTasks")
         public List<Task> getAllTasks() {
             return taskService.getAllTasks();
         }
@@ -25,7 +25,7 @@ import java.util.List;
             return taskService.getTaskById(id);
         }
 
-        @PostMapping
+        @PostMapping("/CreateTask")
         public Task createTask(@RequestBody Task task) {
             return taskService.createTask(task);
         }
