@@ -20,6 +20,7 @@ import java.util.List;
             return taskService.getAllTasks();
         }
 
+
         @GetMapping("/{id}")
         public Task getTaskById(@PathVariable Long id) {
             return taskService.getTaskById(id);
