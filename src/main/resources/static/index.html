@@ -28,35 +28,6 @@
             max-width: 500px;
         }
 
-        input[type="text"] {
-            width: calc(50% - 10px);
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus {
-            border-color: #007bff;
-            outline: none;
-        }
-
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-left: 10px;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
         #task-list {
             margin-top: 20px;
             padding: 0;
@@ -91,64 +62,64 @@
         .delete-button:hover {
             background-color: #c82333;
         }
-
-        @media (max-width: 600px) {
-            input[type="text"] {
-                width: calc(100% - 10px);
-            }
-            button {
-                width: 100%;
-                margin-top: 10px;
-            }
-        }
     </style>
 </head>
 <body>
 <h1>Task Manager</h1>
 <div class="container">
-    <input type="text" id="title" placeholder="Title">
-    <input type="text" id="description" placeholder="Description">
-    <button onclick="createTask()">Add Task</button>
+    <a href="add-task.html">
+        <button aria-label="Add new task">Add New Task</button>
+    </a>
 </div>
-<div id="task-list"></div>
+<div id="task-list">
+    <p>Loading tasks...</p> <!-- Show a loading message while tasks are being fetched -->
+</div>
 
 <script>
     const apiUrl = "http://localhost:8080/api/tasks";
 
     // Fetch and display tasks
     async function fetchTasks() {
-        const response = await fetch(apiUrl + "/getAllTasks");
-        const tasks = await response.json();
-        const taskList = document.getElementById('task-list');
-        taskList.innerHTML = '';
-        tasks.forEach(task => {
-            taskList.innerHTML += `
-                <div class="task">
-                    <span><strong>${task.title}</strong> - ${task.description}</span>
-                    <button class="delete-button" onclick="deleteTask(${task.id})">Delete</button>
-                </div>
-            `;
-        });
+        try {
+            const response = await fetch(apiUrl + "/getAllTasks");
+            if (!response.ok) throw new Error('Failed to fetch tasks.');
+            const tasks = await response.json();
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = ''; // Clear loading message
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<p>No tasks available.</p>'; // Show message if no tasks
+            } else {
+                tasks.forEach(task => {
+                    taskList.innerHTML += `
+                        <div class="task">
+                            <span><strong>${task.title}</strong> - ${task.description}</span>
+                            <button class="delete-button" onclick="confirmDelete(${task.id})" aria-label="Delete task">Delete</button>
+                        </div>
+                    `;
+                });
+            }
+        } catch (error) {
+            document.getElementById('task-list').innerHTML = `<p>Error: ${error.message}</p>`;
+        }
     }
 
-    // Create a new task
-    async function createTask() {
-        const title = document.getElementById('title').value;
-        const description = document.getElementById('description').value;
-        await fetch(apiUrl + "/CreateTask", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, description, completed: false })
-        });
-        document.getElementById('title').value = ''; // Clear input field after submission
-        document.getElementById('description').value = ''; // Clear input field after submission
-        fetchTasks(); // Refresh the task list
+    // Confirm deletion of a task
+    function confirmDelete(id) {
+        const confirmation = confirm("Are you sure you want to delete this task?");
+        if (confirmation) {
+            deleteTask(id);
+        }
     }
 
     // Delete a task
     async function deleteTask(id) {
-        await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
-        fetchTasks();
+        try {
+            const response = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Failed to delete task.');
+            fetchTasks(); // Refresh the task list after deletion
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
     }
 
     // Initial fetch
